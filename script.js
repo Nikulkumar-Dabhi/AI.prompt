@@ -16,6 +16,8 @@
     gemini: { url: "https://gemini.google.com/", label: "Gemini" },
   };
 
+  var openTabWindows = { chatgpt: null, claude: null, gemini: null };
+
   var prompts = [
     {
       id: "code-review",
@@ -283,6 +285,7 @@
       '<button type="button" class="btn btn-outline open-chatgpt-btn" data-prompt-id="' + escapeAttr(p.id) + '" data-body="' + escapeAttr(p.body) + '" data-has-vars="' + (p.variables && p.variables.length ? "1" : "0") + '">Open in ChatGPT</button>' +
       '<button type="button" class="btn btn-outline open-claude-btn" data-prompt-id="' + escapeAttr(p.id) + '" data-body="' + escapeAttr(p.body) + '" data-has-vars="' + (p.variables && p.variables.length ? "1" : "0") + '">Open in Claude</button>' +
       '<button type="button" class="btn btn-outline open-gemini-btn" data-prompt-id="' + escapeAttr(p.id) + '" data-body="' + escapeAttr(p.body) + '" data-has-vars="' + (p.variables && p.variables.length ? "1" : "0") + '">Open in Gemini</button>' +
+      '<div class="prompt-open-tabs">Open tab only: <button type="button" class="link-btn open-tab-btn" data-model="chatgpt">ChatGPT</button> · <button type="button" class="link-btn open-tab-btn" data-model="claude">Claude</button> · <button type="button" class="link-btn open-tab-btn" data-model="gemini">Gemini</button></div>' +
       "</div>" +
       "</div>" +
       "</li>"
@@ -398,18 +401,20 @@
       });
     });
 
-    function openWithPaste(url, label) {
+    function openWithPaste(url, label, modelId) {
       return function (btn) {
         var text = getResolvedText(btn);
         // Copy first so the prompt is in the clipboard before the new tab opens; then open
         navigator.clipboard.writeText(text).then(function () {
           var newWin = window.open(url, "_blank", "noopener,noreferrer");
+          if (modelId && newWin) openTabWindows[modelId] = newWin;
           showToast("Copied! Switch to the new tab and paste with Cmd+V (Mac) or Ctrl+V (Windows).");
           if (!newWin || newWin.closed) {
             showToast("Popup blocked. Open browser settings (e.g. address bar icon or Settings → Privacy) and allow popups for this site, then try again. Or use the Copy button and paste in " + label + ".");
           }
         }).catch(function () {
-          window.open(url, "_blank", "noopener,noreferrer");
+          var newWin = window.open(url, "_blank", "noopener,noreferrer");
+          if (modelId && newWin) openTabWindows[modelId] = newWin;
           showToast("Could not copy. Use the Copy button, then paste in the chat.");
         });
       };
@@ -436,23 +441,49 @@
     }
 
     listEl.querySelectorAll(".open-chatgpt-btn").forEach(function (btn) {
-      btn.addEventListener("click", openWithPaste(OPEN_URLS.chatgpt.url, OPEN_URLS.chatgpt.label));
+      btn.addEventListener("click", openWithPaste(OPEN_URLS.chatgpt.url, OPEN_URLS.chatgpt.label, "chatgpt"));
     });
     listEl.querySelectorAll(".open-claude-btn").forEach(function (btn) {
-      btn.addEventListener("click", openWithPaste(OPEN_URLS.claude.url, OPEN_URLS.claude.label));
+      btn.addEventListener("click", openWithPaste(OPEN_URLS.claude.url, OPEN_URLS.claude.label, "claude"));
     });
     listEl.querySelectorAll(".open-gemini-btn").forEach(function (btn) {
-      btn.addEventListener("click", openWithPaste(OPEN_URLS.gemini.url, OPEN_URLS.gemini.label));
+      btn.addEventListener("click", openWithPaste(OPEN_URLS.gemini.url, OPEN_URLS.gemini.label, "gemini"));
+    });
+
+    function openModelTabOnly(modelId) {
+      var info = OPEN_URLS[modelId];
+      if (!info) return;
+      if (openTabWindows[modelId] && !openTabWindows[modelId].closed) {
+        openTabWindows[modelId].focus();
+        showToast("Switched to " + info.label + " tab. Paste your prompt with Cmd+V or Ctrl+V.");
+        return;
+      }
+      openTabWindows[modelId] = window.open(info.url, "_blank", "noopener,noreferrer");
+      if (openTabWindows[modelId] && !openTabWindows[modelId].closed) {
+        showToast("Opened " + info.label + " tab. Use Copy above then paste in the chat.");
+      } else {
+        showToast("Popup blocked. Open browser settings and allow popups for this site.");
+      }
+    }
+
+    listEl.querySelectorAll(".open-tab-btn").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        openModelTabOnly(btn.getAttribute("data-model"));
+      });
     });
 
     function getUrlAndLabelForPrompt(p) {
-      if (!p || !p.tools || !p.tools.length) return OPEN_URLS.chatgpt;
-      var i, t;
+      if (!p || !p.tools || !p.tools.length) return { url: OPEN_URLS.chatgpt.url, label: OPEN_URLS.chatgpt.label, modelId: "chatgpt" };
+      var i, t, info;
       for (i = 0; i < p.tools.length; i++) {
         t = p.tools[i];
-        if (OPEN_URLS[t]) return OPEN_URLS[t];
+        if (OPEN_URLS[t]) {
+          info = OPEN_URLS[t];
+          return { url: info.url, label: info.label, modelId: t };
+        }
       }
-      return OPEN_URLS.chatgpt;
+      info = OPEN_URLS.chatgpt;
+      return { url: info.url, label: info.label, modelId: "chatgpt" };
     }
 
     listEl.querySelectorAll(".prompt-preview").forEach(function (pre) {
@@ -468,12 +499,14 @@
         // Copy first so the prompt is ready when you paste in the new tab; then open
         navigator.clipboard.writeText(body).then(function () {
           var newWin = window.open(target.url, "_blank", "noopener,noreferrer");
+          if (target.modelId && newWin) openTabWindows[target.modelId] = newWin;
           showToast("Copied! Switch to the new tab and paste with Cmd+V (Mac) or Ctrl+V (Windows).");
           if (!newWin || newWin.closed) {
             showToast("Popup blocked. Open browser settings (e.g. address bar icon or Settings → Privacy) and allow popups for this site, then try again. Or use the Copy button and paste in " + target.label + ".");
           }
         }).catch(function () {
-          window.open(target.url, "_blank", "noopener,noreferrer");
+          var newWin = window.open(target.url, "_blank", "noopener,noreferrer");
+          if (target.modelId && newWin) openTabWindows[target.modelId] = newWin;
           showToast("Could not copy. Use Copy button then paste in the chat.");
         });
       }
