@@ -413,27 +413,19 @@
       });
     });
 
-    function openWithPaste(url, label, modelId) {
-      return function (btn) {
-        var text = getResolvedText(btn);
-        var win;
-        // Open/focus first (same user gesture) so popup blockers don't block
-        if (modelId && openTabWindows[modelId] && !openTabWindows[modelId].closed) {
-          openTabWindows[modelId].focus();
-          win = openTabWindows[modelId];
-        } else {
-          win = window.open(url, "_blank", "noopener,noreferrer");
-          if (modelId && win) openTabWindows[modelId] = win;
-        }
-        navigator.clipboard.writeText(text).then(function () {
-          showToast("Copied! Paste in the tab with Cmd+V (Mac) or Ctrl+V (Windows).");
-        }).catch(function () {
-          if (win && !win.closed) showToast("Could not copy. Use the Copy button, then paste in the chat.");
-        });
-        if (!win || win.closed) {
-          showToast("Popup blocked. Allow popups for this site in browser settings, or use the Copy button and open " + label + " yourself.");
-        }
-      };
+    function openModelTab(url, label, modelId) {
+      var win;
+      if (modelId && openTabWindows[modelId] && !openTabWindows[modelId].closed) {
+        openTabWindows[modelId].focus();
+        win = openTabWindows[modelId];
+      } else {
+        var targetName = modelId ? "pm-" + modelId : "_blank";
+        win = window.open(url, targetName, "noopener,noreferrer");
+        if (modelId && win) openTabWindows[modelId] = win;
+      }
+      if (!win || win.closed) {
+        showToast("Popup blocked. Allow popups for this site in browser settings.");
+      }
     }
 
     function showToast(message) {
@@ -457,13 +449,13 @@
     }
 
     listEl.querySelectorAll(".open-chatgpt-btn").forEach(function (btn) {
-      btn.addEventListener("click", openWithPaste(OPEN_URLS.chatgpt.url, OPEN_URLS.chatgpt.label, "chatgpt"));
+      btn.addEventListener("click", function () { openModelTab(OPEN_URLS.chatgpt.url, OPEN_URLS.chatgpt.label, "chatgpt"); });
     });
     listEl.querySelectorAll(".open-claude-btn").forEach(function (btn) {
-      btn.addEventListener("click", openWithPaste(OPEN_URLS.claude.url, OPEN_URLS.claude.label, "claude"));
+      btn.addEventListener("click", function () { openModelTab(OPEN_URLS.claude.url, OPEN_URLS.claude.label, "claude"); });
     });
     listEl.querySelectorAll(".open-gemini-btn").forEach(function (btn) {
-      btn.addEventListener("click", openWithPaste(OPEN_URLS.gemini.url, OPEN_URLS.gemini.label, "gemini"));
+      btn.addEventListener("click", function () { openModelTab(OPEN_URLS.gemini.url, OPEN_URLS.gemini.label, "gemini"); });
     });
 
     function getUrlAndLabelForPrompt(p) {
@@ -485,28 +477,8 @@
         var promptId = pre.getAttribute("data-prompt-id");
         var p = prompts.find(function (x) { return x.id === promptId; });
         if (!p) return;
-        var valuesAgain = getValuesFromForm();
-        var body = (p.variables && p.variables.length)
-          ? substitute(p.body, normalizedValues(valuesAgain[p.id] || {}))
-          : p.body;
         var target = getUrlAndLabelForPrompt(p);
-        var win;
-        // Open/focus first (same user gesture) so popup blockers don't block
-        if (target.modelId && openTabWindows[target.modelId] && !openTabWindows[target.modelId].closed) {
-          openTabWindows[target.modelId].focus();
-          win = openTabWindows[target.modelId];
-        } else {
-          win = window.open(target.url, "_blank", "noopener,noreferrer");
-          if (target.modelId && win) openTabWindows[target.modelId] = win;
-        }
-        navigator.clipboard.writeText(body).then(function () {
-          showToast("Copied! Paste in the tab with Cmd+V (Mac) or Ctrl+V (Windows).");
-        }).catch(function () {
-          if (win && !win.closed) showToast("Could not copy. Use Copy button then paste in the chat.");
-        });
-        if (!win || win.closed) {
-          showToast("Popup blocked. Allow popups for this site in browser settings, or use the Copy button and open " + target.label + " yourself.");
-        }
+        openModelTab(target.url, target.label, target.modelId);
       }
       pre.addEventListener("click", function (e) {
         e.preventDefault();
