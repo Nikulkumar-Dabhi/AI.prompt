@@ -189,6 +189,19 @@
       tags: ["ghibli", "image", "art", "illustration"],
       variables: [{ key: "topic", label: "Topic (5–10 words)", placeholder: "e.g. cat on a flying bicycle over the sea" }],
     },
+    {
+      id: "youtube-summary",
+      title: "YouTube Video Summary",
+      description: "Summarize any YouTube video in your chosen format: 10–12 bullet points, 2 paragraphs, or 1 page extract. Paste the video link.",
+      body: "Summarize this YouTube video for me.\n\nVideo URL: {{link}}\n\nI want the summary in this format: {{format}}.\n\nIf you cannot access the video directly, ask me to paste the transcript or use a tool to fetch the transcript, then produce the summary in the requested format.",
+      tools: ["chatgpt", "claude", "gemini", "general"],
+      category: "Productivity",
+      tags: ["youtube", "summary", "video", "bullet-points", "extract"],
+      variables: [
+        { key: "link", label: "YouTube video link", placeholder: "https://www.youtube.com/watch?v=..." },
+        { key: "format", label: "Summary format", placeholder: "10–12 key bullet points, OR 2 paragraph summary, OR 1 page extract" },
+      ],
+    },
   ];
 
   function substitute(body, values) {
@@ -285,7 +298,6 @@
       '<button type="button" class="btn btn-outline open-chatgpt-btn" data-prompt-id="' + escapeAttr(p.id) + '" data-body="' + escapeAttr(p.body) + '" data-has-vars="' + (p.variables && p.variables.length ? "1" : "0") + '">Open in ChatGPT</button>' +
       '<button type="button" class="btn btn-outline open-claude-btn" data-prompt-id="' + escapeAttr(p.id) + '" data-body="' + escapeAttr(p.body) + '" data-has-vars="' + (p.variables && p.variables.length ? "1" : "0") + '">Open in Claude</button>' +
       '<button type="button" class="btn btn-outline open-gemini-btn" data-prompt-id="' + escapeAttr(p.id) + '" data-body="' + escapeAttr(p.body) + '" data-has-vars="' + (p.variables && p.variables.length ? "1" : "0") + '">Open in Gemini</button>' +
-      '<div class="prompt-open-tabs">Open tab only: <button type="button" class="link-btn open-tab-btn" data-model="chatgpt">ChatGPT</button> · <button type="button" class="link-btn open-tab-btn" data-model="claude">Claude</button> · <button type="button" class="link-btn open-tab-btn" data-model="gemini">Gemini</button></div>' +
       "</div>" +
       "</div>" +
       "</li>"
@@ -404,17 +416,28 @@
     function openWithPaste(url, label, modelId) {
       return function (btn) {
         var text = getResolvedText(btn);
-        // Copy first so the prompt is in the clipboard before the new tab opens; then open
+        // Copy first; then open new tab or jump to existing one if already open
         navigator.clipboard.writeText(text).then(function () {
-          var newWin = window.open(url, "_blank", "noopener,noreferrer");
-          if (modelId && newWin) openTabWindows[modelId] = newWin;
-          showToast("Copied! Switch to the new tab and paste with Cmd+V (Mac) or Ctrl+V (Windows).");
-          if (!newWin || newWin.closed) {
-            showToast("Popup blocked. Open browser settings (e.g. address bar icon or Settings → Privacy) and allow popups for this site, then try again. Or use the Copy button and paste in " + label + ".");
+          var newWin;
+          if (modelId && openTabWindows[modelId] && !openTabWindows[modelId].closed) {
+            openTabWindows[modelId].focus();
+            showToast("Copied! Switched to " + label + " tab. Paste with Cmd+V (Mac) or Ctrl+V (Windows).");
+          } else {
+            newWin = window.open(url, "_blank", "noopener,noreferrer");
+            if (modelId && newWin) openTabWindows[modelId] = newWin;
+            showToast("Copied! Switch to the new tab and paste with Cmd+V (Mac) or Ctrl+V (Windows).");
+            if (!newWin || newWin.closed) {
+              showToast("Popup blocked. Open browser settings (e.g. address bar icon or Settings → Privacy) and allow popups for this site, then try again. Or use the Copy button and paste in " + label + ".");
+            }
           }
         }).catch(function () {
-          var newWin = window.open(url, "_blank", "noopener,noreferrer");
-          if (modelId && newWin) openTabWindows[modelId] = newWin;
+          var win;
+          if (modelId && openTabWindows[modelId] && !openTabWindows[modelId].closed) {
+            openTabWindows[modelId].focus();
+          } else {
+            win = window.open(url, "_blank", "noopener,noreferrer");
+            if (modelId && win) openTabWindows[modelId] = win;
+          }
           showToast("Could not copy. Use the Copy button, then paste in the chat.");
         });
       };
@@ -448,28 +471,6 @@
     });
     listEl.querySelectorAll(".open-gemini-btn").forEach(function (btn) {
       btn.addEventListener("click", openWithPaste(OPEN_URLS.gemini.url, OPEN_URLS.gemini.label, "gemini"));
-    });
-
-    function openModelTabOnly(modelId) {
-      var info = OPEN_URLS[modelId];
-      if (!info) return;
-      if (openTabWindows[modelId] && !openTabWindows[modelId].closed) {
-        openTabWindows[modelId].focus();
-        showToast("Switched to " + info.label + " tab. Paste your prompt with Cmd+V or Ctrl+V.");
-        return;
-      }
-      openTabWindows[modelId] = window.open(info.url, "_blank", "noopener,noreferrer");
-      if (openTabWindows[modelId] && !openTabWindows[modelId].closed) {
-        showToast("Opened " + info.label + " tab. Use Copy above then paste in the chat.");
-      } else {
-        showToast("Popup blocked. Open browser settings and allow popups for this site.");
-      }
-    }
-
-    listEl.querySelectorAll(".open-tab-btn").forEach(function (btn) {
-      btn.addEventListener("click", function () {
-        openModelTabOnly(btn.getAttribute("data-model"));
-      });
     });
 
     function getUrlAndLabelForPrompt(p) {
