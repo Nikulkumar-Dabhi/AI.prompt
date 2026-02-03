@@ -1,25 +1,34 @@
 # Deploy Prompt Master to GitHub & promptmaster.io
 
-## 1. Push to GitHub
+## Option A: One command (with GitHub token)
 
-If you haven’t created the repo yet:
-
-1. On GitHub: **New repository** → name it `promptmaster` (or `Prompt-Master`).
-2. Don’t add a README (this repo already has one).
-
-Then in this project folder:
+1. Create a [GitHub Personal Access Token](https://github.com/settings/tokens) with `repo` scope.
+2. In this project folder run:
 
 ```bash
 cd "/Users/nikulsinhdabhi/Github/Prompt Master"
-git init
-git add .
-git commit -m "Initial commit: Prompt Master site"
-git branch -M main
-git remote add origin https://github.com/YOUR_USERNAME/promptmaster.git
-git push -u origin main
+GITHUB_TOKEN=your_token_here npm run push
 ```
 
-Replace `YOUR_USERNAME` with your GitHub username (and `promptmaster` with your repo name if different).
+This creates the `promptmaster` repo on GitHub and pushes. If your username isn’t `nikulsinhdabhi`, set `GITHUB_USER=your_username` as well.
+
+## Option B: Create repo in browser, then push
+
+**Create the repo on GitHub first:**
+
+1. Go to [github.com/new](https://github.com/new).
+2. Repository name: `promptmaster`.
+3. Leave “Add a README” **unchecked**.
+4. Create repository.
+
+Then run:
+
+```bash
+cd "/Users/nikulsinhdabhi/Github/Prompt Master"
+npm run push
+```
+
+(Or run `git push -u origin main` if the remote is already set.)
 
 ## 2. Deploy as promptmaster.io (Vercel)
 
