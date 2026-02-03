@@ -321,3 +321,27 @@ body {
 .empty-state p {
   margin: 0;
 }
+
+/* Toast (Open in ChatGPT/Claude feedback) */
+.prompt-master-toast {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%) translateY(1rem);
+  max-width: min(90vw, 28rem);
+  padding: 0.75rem 1.25rem;
+  font-size: 0.875rem;
+  color: var(--ink);
+  background: var(--paper-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  opacity: 0;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 9999;
+}
+
+.prompt-master-toast-visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}

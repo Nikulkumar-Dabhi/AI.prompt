@@ -351,24 +351,38 @@
     function openWithPaste(url, label) {
       return function (btn) {
         var text = getResolvedText(btn);
-        var msg = "Your prompt (with your topic) is copied. Opening " + label + "... Paste with Cmd+V (Mac) or Ctrl+V (Windows) in the chat.";
-        var html = "<!DOCTYPE html><html><head><meta charset=utf-8><title>Opening " + label + "</title></head><body style=\"font-family:system-ui;padding:2rem;text-align:center;max-width:24rem;margin:4rem auto;\"><p style=\"color:#333;\">" + escapeHtml(msg) + "</p><p style=\"color:#666;font-size:0.9rem;\">Redirecting in 2 seconds...</p></body></html>";
-        var script = "<script>setTimeout(function(){ window.location.href='" + url.replace(/'/g, "\\'") + "'; }, 2000);<\\/script>";
-        var dataUrl = "data:text/html;charset=utf-8," + encodeURIComponent(html + script);
-        // Open first (sync) so popup blockers don't block; then copy
-        var newWin = window.open(dataUrl, "_blank", "noopener,noreferrer");
+        // Copy first, then open the real URL directly (no data URL) so it works on GitHub Pages / HTTPS
         navigator.clipboard.writeText(text).then(function () {
+          var newWin = window.open(url, "_blank", "noopener,noreferrer");
+          showToast("Copied! Opening " + label + "… Paste with Cmd+V (Mac) or Ctrl+V (Windows) in the chat.");
           if (!newWin || newWin.closed) {
-            window.open(url, "_blank", "noopener,noreferrer");
+            showToast("Popup was blocked. Allow popups for this site, or use Copy then paste in " + label + ".");
           }
         }).catch(function () {
-          if (newWin && !newWin.closed) {
-            try {
-              newWin.document.body.insertAdjacentHTML("beforeend", "<p style='color:#b45309;margin-top:1rem;'>Clipboard failed. Use the Copy button, then paste in the chat.</p>");
-            } catch (e) {}
-          }
+          window.open(url, "_blank", "noopener,noreferrer");
+          showToast("Could not copy. Use the Copy button, then paste in the chat.");
         });
       };
+    }
+
+    function showToast(message) {
+      var existing = document.getElementById("prompt-master-toast");
+      if (existing) existing.remove();
+      var toast = document.createElement("div");
+      toast.id = "prompt-master-toast";
+      toast.setAttribute("role", "alert");
+      toast.className = "prompt-master-toast";
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      requestAnimationFrame(function () {
+        toast.classList.add("prompt-master-toast-visible");
+      });
+      setTimeout(function () {
+        toast.classList.remove("prompt-master-toast-visible");
+        setTimeout(function () {
+          if (toast.parentNode) toast.parentNode.removeChild(toast);
+        }, 300);
+      }, 4000);
     }
 
     listEl.querySelectorAll(".open-chatgpt-btn").forEach(function (btn) {
