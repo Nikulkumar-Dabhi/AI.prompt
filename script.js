@@ -170,6 +170,16 @@
       tags: ["product", "user-stories", "agile"],
       variables: [{ key: "idea", label: "Product idea", placeholder: "Describe the feature or product" }],
     },
+    {
+      id: "ghibli-image",
+      title: "Ghibli-Style Image",
+      description: "Generate an image in Studio Ghibli style. Enter a short topic (5–10 words).",
+      body: "Generate an image in Studio Ghibli style. Topic: {{topic}}.\n\nStyle: hand-drawn anime aesthetic like My Neighbor Totoro or Spirited Away — soft colors, detailed backgrounds, whimsical and warm atmosphere, gentle lighting. No text or text overlays in the image. One clear subject or scene.",
+      tools: ["chatgpt", "claude", "general"],
+      category: "Creative",
+      tags: ["ghibli", "image", "art", "illustration"],
+      variables: [{ key: "topic", label: "Topic (5–10 words)", placeholder: "e.g. cat on a flying bicycle over the sea" }],
+    },
   ];
 
   function substitute(body, values) {
