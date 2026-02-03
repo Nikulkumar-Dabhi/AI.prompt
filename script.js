@@ -84,6 +84,18 @@
       ],
     },
     {
+      id: "medium-post",
+      title: "Write a Medium Post",
+      description: "Full Medium article with Clear/Koe/Naval style, formatting, image placeholder, caption, hashtags, and draft instructions.",
+      body: "Write a Medium post on this topic: \"{{topic}}\", using proper formatting and a style inspired by James Clear, Dan Koe, or Naval Ravikant. Use Medium's formatting tools: headings (H2/H3), blockquotes, bullet/numbered lists, and emphasis (bold/italic).\n\nStructure: catchy title, hook in the first paragraph, 3–5 clear sections with subheadings, short paragraphs (2–4 sentences). End with a concrete takeaway or call-to-action.\n\nInclude a placeholder where a landscape image should go. Write a one-sentence caption for the image (below it, following Medium's guidelines). The image should be generated with Gemini (latest models), relevant to the topic, landscape orientation, saved to desktop, then embedded in the post with this caption.\n\nAdd exactly five relevant hashtags at the end of the post.\n\nRemind the reader to save the post as a draft in Medium before publishing.",
+      tools: ["chatgpt", "claude", "general"],
+      category: "Writing",
+      tags: ["medium", "blog", "article", "james-clear", "formatting"],
+      variables: [
+        { key: "topic", label: "Topic", placeholder: "e.g. Why I switched from REST to GraphQL" },
+      ],
+    },
+    {
       id: "meeting-notes",
       title: "Meeting Notes to Action Items",
       description: "Turn raw meeting notes into clear action items and summaries.",
@@ -251,6 +263,8 @@
       '">' +
       (copiedId === p.id ? "Copied" : "Copy") +
       "</button>" +
+      '<button type="button" class="btn btn-outline open-chatgpt-btn" data-prompt-id="' + escapeAttr(p.id) + '" data-body="' + escapeAttr(p.body) + '" data-has-vars="' + (p.variables && p.variables.length ? "1" : "0") + '">Open in ChatGPT</button>' +
+      '<button type="button" class="btn btn-outline open-claude-btn" data-prompt-id="' + escapeAttr(p.id) + '" data-body="' + escapeAttr(p.body) + '" data-has-vars="' + (p.variables && p.variables.length ? "1" : "0") + '">Open in Claude</button>' +
       "</div>" +
       "</div>" +
       "</li>"
@@ -305,15 +319,18 @@
       });
     });
 
+    function getResolvedText(btn) {
+      var promptId = btn.getAttribute("data-prompt-id");
+      var body = btn.getAttribute("data-body");
+      var hasVars = btn.getAttribute("data-has-vars") === "1";
+      var valuesAgain = getValuesFromForm();
+      var p = prompts.find(function (x) { return x.id === promptId; });
+      return hasVars && p && p.variables ? substitute(body, valuesAgain[p.id] || {}) : body;
+    }
+
     listEl.querySelectorAll(".copy-btn").forEach(function (btn) {
       btn.addEventListener("click", function () {
-        var promptId = btn.getAttribute("data-prompt-id");
-        var body = btn.getAttribute("data-body");
-        var hasVars = btn.getAttribute("data-has-vars") === "1";
-        var valuesAgain = getValuesFromForm();
-        var p = prompts.find(function (x) { return x.id === promptId; });
-        var text = hasVars && p && p.variables ? substitute(body, valuesAgain[p.id] || {}) : body;
-
+        var text = getResolvedText(btn);
         navigator.clipboard
           .writeText(text)
           .then(function () {
@@ -329,6 +346,37 @@
           })
           .catch(function () {});
       });
+    });
+
+    function openWithPaste(url, label) {
+      return function (btn) {
+        var text = getResolvedText(btn);
+        var msg = "Your prompt (with your topic) is copied. Opening " + label + "... Paste with Cmd+V (Mac) or Ctrl+V (Windows) in the chat.";
+        var html = "<!DOCTYPE html><html><head><meta charset=utf-8><title>Opening " + label + "</title></head><body style=\"font-family:system-ui;padding:2rem;text-align:center;max-width:24rem;margin:4rem auto;\"><p style=\"color:#333;\">" + escapeHtml(msg) + "</p><p style=\"color:#666;font-size:0.9rem;\">Redirecting in 2 seconds...</p></body></html>";
+        var script = "<script>setTimeout(function(){ window.location.href='" + url.replace(/'/g, "\\'") + "'; }, 2000);<\\/script>";
+        var dataUrl = "data:text/html;charset=utf-8," + encodeURIComponent(html + script);
+        // Open first (sync) so popup blockers don't block; then copy
+        var newWin = window.open(dataUrl, "_blank", "noopener,noreferrer");
+        navigator.clipboard.writeText(text).then(function () {
+          if (!newWin || newWin.closed) {
+            window.open(url, "_blank", "noopener,noreferrer");
+          }
+        }).catch(function () {
+          if (newWin && !newWin.closed) {
+            try {
+              newWin.document.body.insertAdjacentHTML("beforeend", "<p style='color:#b45309;margin-top:1rem;'>Clipboard failed. Use the Copy button, then paste in the chat.</p>");
+            } catch (e) {}
+          }
+        });
+      };
+    }
+
+    listEl.querySelectorAll(".open-chatgpt-btn").forEach(function (btn) {
+      btn.addEventListener("click", openWithPaste("https://chat.openai.com/", "ChatGPT"));
+    });
+
+    listEl.querySelectorAll(".open-claude-btn").forEach(function (btn) {
+      btn.addEventListener("click", openWithPaste("https://claude.ai/", "Claude"));
     });
   }
 

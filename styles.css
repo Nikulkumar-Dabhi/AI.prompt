@@ -210,6 +210,7 @@ body {
 
 .prompt-actions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem;
   margin-top: 0.75rem;
@@ -243,6 +244,18 @@ body {
 .btn-copied {
   background: #0d7a4a;
   color: #fff;
+}
+
+.btn-outline {
+  background: transparent;
+  color: var(--ink-muted);
+  border: 1px solid var(--border);
+}
+
+.btn-outline:hover {
+  background: rgba(0, 0, 0, 0.04);
+  color: var(--ink);
+  border-color: var(--ink-light);
 }
 
 .tool-tags {
@@ -288,6 +301,13 @@ body {
 
 .footer a:hover {
   color: var(--accent-hover);
+}
+
+.footer-tip {
+  margin-top: 0.75rem;
+  font-size: 0.75rem;
+  color: var(--ink-light);
+  max-width: 36rem;
 }
 
 /* Empty state */
