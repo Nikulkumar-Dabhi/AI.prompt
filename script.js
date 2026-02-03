@@ -5,9 +5,16 @@
     { id: "chatgpt", name: "ChatGPT" },
     { id: "cursor", name: "Cursor" },
     { id: "claude", name: "Claude" },
+    { id: "gemini", name: "Gemini" },
     { id: "copilot", name: "Copilot" },
     { id: "general", name: "Any AI" },
   ];
+
+  var OPEN_URLS = {
+    chatgpt: { url: "https://chat.openai.com/", label: "ChatGPT" },
+    claude: { url: "https://claude.ai/", label: "Claude" },
+    gemini: { url: "https://gemini.google.com/", label: "Gemini" },
+  };
 
   var prompts = [
     {
@@ -175,7 +182,7 @@
       title: "Ghibli-Style Image",
       description: "Generate an image in Studio Ghibli style. Enter a short topic (5–10 words).",
       body: "Generate an image in Studio Ghibli style. Topic: {{topic}}.\n\nStyle: hand-drawn anime aesthetic like My Neighbor Totoro or Spirited Away — soft colors, detailed backgrounds, whimsical and warm atmosphere, gentle lighting. No text or text overlays in the image. One clear subject or scene.",
-      tools: ["chatgpt", "claude", "general"],
+      tools: ["chatgpt", "claude", "gemini", "general"],
       category: "Creative",
       tags: ["ghibli", "image", "art", "illustration"],
       variables: [{ key: "topic", label: "Topic (5–10 words)", placeholder: "e.g. cat on a flying bicycle over the sea" }],
@@ -260,7 +267,7 @@
       "</p>" +
       (toolLabels.length ? '<div class="tool-tags">' + toolLabels.map(function (l) { return '<span class="tool-tag">' + escapeHtml(l) + "</span>"; }).join("") + "</div>" : "") +
       varsHtml +
-      '<pre class="prompt-preview" data-prompt-id="' + escapeAttr(p.id) + '" role="button" tabindex="0" aria-label="Click to copy prompt and open in ChatGPT or Claude">' +
+      '<pre class="prompt-preview" data-prompt-id="' + escapeAttr(p.id) + '" role="button" tabindex="0" aria-label="Click to copy prompt and open in ChatGPT, Claude, or Gemini">' +
       escapeHtml(resolvedBody) +
       "</pre>" +
       '<div class="prompt-actions">' +
@@ -275,6 +282,7 @@
       "</button>" +
       '<button type="button" class="btn btn-outline open-chatgpt-btn" data-prompt-id="' + escapeAttr(p.id) + '" data-body="' + escapeAttr(p.body) + '" data-has-vars="' + (p.variables && p.variables.length ? "1" : "0") + '">Open in ChatGPT</button>' +
       '<button type="button" class="btn btn-outline open-claude-btn" data-prompt-id="' + escapeAttr(p.id) + '" data-body="' + escapeAttr(p.body) + '" data-has-vars="' + (p.variables && p.variables.length ? "1" : "0") + '">Open in Claude</button>' +
+      '<button type="button" class="btn btn-outline open-gemini-btn" data-prompt-id="' + escapeAttr(p.id) + '" data-body="' + escapeAttr(p.body) + '" data-has-vars="' + (p.variables && p.variables.length ? "1" : "0") + '">Open in Gemini</button>' +
       "</div>" +
       "</div>" +
       "</li>"
@@ -393,17 +401,18 @@
     function openWithPaste(url, label) {
       return function (btn) {
         var text = getResolvedText(btn);
-        // Copy first, then open the real URL directly (no data URL) so it works on GitHub Pages / HTTPS
+        // Open first (same user gesture) so popup blockers don't block; then copy
+        var newWin = window.open(url, "_blank", "noopener,noreferrer");
         navigator.clipboard.writeText(text).then(function () {
-          var newWin = window.open(url, "_blank", "noopener,noreferrer");
-          showToast("Copied! Opening " + label + "… Paste with Cmd+V (Mac) or Ctrl+V (Windows) in the chat.");
-          if (!newWin || newWin.closed) {
-            showToast("Popup was blocked. Allow popups for this site, or use Copy then paste in " + label + ".");
-          }
+          showToast("Copied! Paste with Cmd+V (Mac) or Ctrl+V (Windows) in the chat.");
         }).catch(function () {
-          window.open(url, "_blank", "noopener,noreferrer");
-          showToast("Could not copy. Use the Copy button, then paste in the chat.");
+          if (newWin && !newWin.closed) {
+            showToast("Could not copy. Use the Copy button, then paste in the chat.");
+          }
         });
+        if (!newWin || newWin.closed) {
+          showToast("Popup blocked. Allow popups for this site, or use Copy then paste in " + label + ".");
+        }
       };
     }
 
@@ -428,18 +437,23 @@
     }
 
     listEl.querySelectorAll(".open-chatgpt-btn").forEach(function (btn) {
-      btn.addEventListener("click", openWithPaste("https://chat.openai.com/", "ChatGPT"));
+      btn.addEventListener("click", openWithPaste(OPEN_URLS.chatgpt.url, OPEN_URLS.chatgpt.label));
     });
-
     listEl.querySelectorAll(".open-claude-btn").forEach(function (btn) {
-      btn.addEventListener("click", openWithPaste("https://claude.ai/", "Claude"));
+      btn.addEventListener("click", openWithPaste(OPEN_URLS.claude.url, OPEN_URLS.claude.label));
+    });
+    listEl.querySelectorAll(".open-gemini-btn").forEach(function (btn) {
+      btn.addEventListener("click", openWithPaste(OPEN_URLS.gemini.url, OPEN_URLS.gemini.label));
     });
 
     function getUrlAndLabelForPrompt(p) {
-      if (!p || !p.tools || !p.tools.length) return { url: "https://chat.openai.com/", label: "ChatGPT" };
-      if (p.tools.indexOf("chatgpt") !== -1) return { url: "https://chat.openai.com/", label: "ChatGPT" };
-      if (p.tools.indexOf("claude") !== -1) return { url: "https://claude.ai/", label: "Claude" };
-      return { url: "https://chat.openai.com/", label: "ChatGPT" };
+      if (!p || !p.tools || !p.tools.length) return OPEN_URLS.chatgpt;
+      var i, t;
+      for (i = 0; i < p.tools.length; i++) {
+        t = p.tools[i];
+        if (OPEN_URLS[t]) return OPEN_URLS[t];
+      }
+      return OPEN_URLS.chatgpt;
     }
 
     listEl.querySelectorAll(".prompt-preview").forEach(function (pre) {
@@ -452,13 +466,16 @@
           ? substitute(p.body, normalizedValues(valuesAgain[p.id] || {}))
           : p.body;
         var target = getUrlAndLabelForPrompt(p);
+        // Open first (same user gesture) so popup blockers don't block
+        var newWin = window.open(target.url, "_blank", "noopener,noreferrer");
         navigator.clipboard.writeText(body).then(function () {
-          window.open(target.url, "_blank", "noopener,noreferrer");
-          showToast("Copied! Opened " + target.label + ". Paste with Cmd+V (Mac) or Ctrl+V (Windows) in the chat.");
+          showToast("Copied! Paste with Cmd+V (Mac) or Ctrl+V (Windows) in " + target.label + ".");
         }).catch(function () {
-          window.open(target.url, "_blank", "noopener,noreferrer");
-          showToast("Could not copy. Use Copy button then paste in the chat.");
+          if (newWin && !newWin.closed) showToast("Could not copy. Use Copy button then paste in the chat.");
         });
+        if (!newWin || newWin.closed) {
+          showToast("Popup blocked. Allow popups for this site, or use Copy then paste in " + target.label + ".");
+        }
       }
       pre.addEventListener("click", function (e) {
         e.preventDefault();
