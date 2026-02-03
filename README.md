@@ -4,7 +4,7 @@ Copy prompts for **ChatGPT**, **Cursor**, **Claude**, and **Copilot**. Filter by
 
 ## Live site (after enabling GitHub Pages)
 
-**https://nikulsinhdabhi.github.io/promptmaster/**
+**https://nikulkumar-dabhi.github.io/AI.prompt/**
 
 ## Run locally
 
