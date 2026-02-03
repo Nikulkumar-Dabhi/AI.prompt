@@ -401,18 +401,17 @@
     function openWithPaste(url, label) {
       return function (btn) {
         var text = getResolvedText(btn);
-        // Open first (same user gesture) so popup blockers don't block; then copy
-        var newWin = window.open(url, "_blank", "noopener,noreferrer");
+        // Copy first so the prompt is in the clipboard before the new tab opens; then open
         navigator.clipboard.writeText(text).then(function () {
-          showToast("Copied! Paste with Cmd+V (Mac) or Ctrl+V (Windows) in the chat.");
-        }).catch(function () {
-          if (newWin && !newWin.closed) {
-            showToast("Could not copy. Use the Copy button, then paste in the chat.");
+          var newWin = window.open(url, "_blank", "noopener,noreferrer");
+          showToast("Copied! Switch to the new tab and paste with Cmd+V (Mac) or Ctrl+V (Windows).");
+          if (!newWin || newWin.closed) {
+            showToast("Popup blocked. Open browser settings (e.g. address bar icon or Settings → Privacy) and allow popups for this site, then try again. Or use the Copy button and paste in " + label + ".");
           }
+        }).catch(function () {
+          window.open(url, "_blank", "noopener,noreferrer");
+          showToast("Could not copy. Use the Copy button, then paste in the chat.");
         });
-        if (!newWin || newWin.closed) {
-          showToast("Popup blocked. Allow popups for this site, or use Copy then paste in " + label + ".");
-        }
       };
     }
 
@@ -466,16 +465,17 @@
           ? substitute(p.body, normalizedValues(valuesAgain[p.id] || {}))
           : p.body;
         var target = getUrlAndLabelForPrompt(p);
-        // Open first (same user gesture) so popup blockers don't block
-        var newWin = window.open(target.url, "_blank", "noopener,noreferrer");
+        // Copy first so the prompt is ready when you paste in the new tab; then open
         navigator.clipboard.writeText(body).then(function () {
-          showToast("Copied! Paste with Cmd+V (Mac) or Ctrl+V (Windows) in " + target.label + ".");
+          var newWin = window.open(target.url, "_blank", "noopener,noreferrer");
+          showToast("Copied! Switch to the new tab and paste with Cmd+V (Mac) or Ctrl+V (Windows).");
+          if (!newWin || newWin.closed) {
+            showToast("Popup blocked. Open browser settings (e.g. address bar icon or Settings → Privacy) and allow popups for this site, then try again. Or use the Copy button and paste in " + target.label + ".");
+          }
         }).catch(function () {
-          if (newWin && !newWin.closed) showToast("Could not copy. Use Copy button then paste in the chat.");
+          window.open(target.url, "_blank", "noopener,noreferrer");
+          showToast("Could not copy. Use Copy button then paste in the chat.");
         });
-        if (!newWin || newWin.closed) {
-          showToast("Popup blocked. Allow popups for this site, or use Copy then paste in " + target.label + ".");
-        }
       }
       pre.addEventListener("click", function (e) {
         e.preventDefault();
