@@ -416,30 +416,23 @@
     function openWithPaste(url, label, modelId) {
       return function (btn) {
         var text = getResolvedText(btn);
-        // Copy first; then open new tab or jump to existing one if already open
+        var win;
+        // Open/focus first (same user gesture) so popup blockers don't block
+        if (modelId && openTabWindows[modelId] && !openTabWindows[modelId].closed) {
+          openTabWindows[modelId].focus();
+          win = openTabWindows[modelId];
+        } else {
+          win = window.open(url, "_blank", "noopener,noreferrer");
+          if (modelId && win) openTabWindows[modelId] = win;
+        }
         navigator.clipboard.writeText(text).then(function () {
-          var newWin;
-          if (modelId && openTabWindows[modelId] && !openTabWindows[modelId].closed) {
-            openTabWindows[modelId].focus();
-            showToast("Copied! Switched to " + label + " tab. Paste with Cmd+V (Mac) or Ctrl+V (Windows).");
-          } else {
-            newWin = window.open(url, "_blank", "noopener,noreferrer");
-            if (modelId && newWin) openTabWindows[modelId] = newWin;
-            showToast("Copied! Switch to the new tab and paste with Cmd+V (Mac) or Ctrl+V (Windows).");
-            if (!newWin || newWin.closed) {
-              showToast("Popup blocked. Open browser settings (e.g. address bar icon or Settings → Privacy) and allow popups for this site, then try again. Or use the Copy button and paste in " + label + ".");
-            }
-          }
+          showToast("Copied! Paste in the tab with Cmd+V (Mac) or Ctrl+V (Windows).");
         }).catch(function () {
-          var win;
-          if (modelId && openTabWindows[modelId] && !openTabWindows[modelId].closed) {
-            openTabWindows[modelId].focus();
-          } else {
-            win = window.open(url, "_blank", "noopener,noreferrer");
-            if (modelId && win) openTabWindows[modelId] = win;
-          }
-          showToast("Could not copy. Use the Copy button, then paste in the chat.");
+          if (win && !win.closed) showToast("Could not copy. Use the Copy button, then paste in the chat.");
         });
+        if (!win || win.closed) {
+          showToast("Popup blocked. Allow popups for this site in browser settings, or use the Copy button and open " + label + " yourself.");
+        }
       };
     }
 
@@ -497,19 +490,23 @@
           ? substitute(p.body, normalizedValues(valuesAgain[p.id] || {}))
           : p.body;
         var target = getUrlAndLabelForPrompt(p);
-        // Copy first so the prompt is ready when you paste in the new tab; then open
+        var win;
+        // Open/focus first (same user gesture) so popup blockers don't block
+        if (target.modelId && openTabWindows[target.modelId] && !openTabWindows[target.modelId].closed) {
+          openTabWindows[target.modelId].focus();
+          win = openTabWindows[target.modelId];
+        } else {
+          win = window.open(target.url, "_blank", "noopener,noreferrer");
+          if (target.modelId && win) openTabWindows[target.modelId] = win;
+        }
         navigator.clipboard.writeText(body).then(function () {
-          var newWin = window.open(target.url, "_blank", "noopener,noreferrer");
-          if (target.modelId && newWin) openTabWindows[target.modelId] = newWin;
-          showToast("Copied! Switch to the new tab and paste with Cmd+V (Mac) or Ctrl+V (Windows).");
-          if (!newWin || newWin.closed) {
-            showToast("Popup blocked. Open browser settings (e.g. address bar icon or Settings → Privacy) and allow popups for this site, then try again. Or use the Copy button and paste in " + target.label + ".");
-          }
+          showToast("Copied! Paste in the tab with Cmd+V (Mac) or Ctrl+V (Windows).");
         }).catch(function () {
-          var newWin = window.open(target.url, "_blank", "noopener,noreferrer");
-          if (target.modelId && newWin) openTabWindows[target.modelId] = newWin;
-          showToast("Could not copy. Use Copy button then paste in the chat.");
+          if (win && !win.closed) showToast("Could not copy. Use Copy button then paste in the chat.");
         });
+        if (!win || win.closed) {
+          showToast("Popup blocked. Allow popups for this site in browser settings, or use the Copy button and open " + target.label + " yourself.");
+        }
       }
       pre.addEventListener("click", function (e) {
         e.preventDefault();
