@@ -1,69 +1,21 @@
 # Prompt Master
 
-A modern, all-in-one website for finding, customizing, and using high-quality prompts for AI tools (ChatGPT, Cursor, Claude, Copilot, and more). Live at **[promptmaster.io](https://promptmaster.io)**.
+Copy prompts for **ChatGPT**, **Cursor**, **Claude**, and **Copilot**. Filter by tool, search, fill in variables, and copy with one click.
 
-## Features
+## Live site (after enabling GitHub Pages)
 
-- **Browse** prompts by AI tool and category
-- **Search** by title, description, category, tags, or prompt text
-- **Customize** prompts with variables (e.g. `{{topic}}`, `{{code}}`) before copying
-- **Copy** the full prompt to the clipboard and paste into your preferred AI
-- Responsive layout and accessible UI
+**https://nikulsinhdabhi.github.io/promptmaster/**
 
-## Tech stack
+## Run locally
 
-- [Next.js 14](https://nextjs.org/) (App Router)
-- [TypeScript](https://www.typescriptlang.org/)
-- [Tailwind CSS](https://tailwindcss.com/)
-- Fonts: Outfit (display), DM Sans (body), JetBrains Mono (prompt text)
-
-## Getting started
-
-1. Install dependencies:
-
-   ```bash
-   npm install
-   ```
-
-2. Run the dev server:
-
-   ```bash
-   npm run dev
-   ```
-
-3. Open [http://localhost:3000](http://localhost:3000).
-
-## Project structure
-
-- `app/` — Next.js App Router pages (home, browse, search, prompt detail)
-- `components/` — Header, Footer, PromptCard, CopyButton
-- `lib/` — Types, prompt data, and helpers (getPromptById, searchPrompts)
-
-## Adding prompts
-
-Edit `lib/prompts.ts` and add entries to the `prompts` array. Each prompt can specify:
-
-- `id`, `title`, `description`, `body`
-- `tools` — which AI tools it works with
-- `category` — e.g. Coding, Writing, Analysis
-- `tags` — for search
-- `variables` — optional list of `{ key, label, placeholder, description }` for customization (use `{{key}}` in `body`)
-
-## Build
+Open `index.html` in a browser, or serve the folder:
 
 ```bash
-npm run build
-npm start
+python3 -m http.server 8080
 ```
 
-## Deploy (Vercel + promptmaster.io)
+Then visit http://localhost:8080
 
-1. Push this repo to GitHub (see below).
-2. Go to [vercel.com](https://vercel.com) → **Add New** → **Project** → Import your repo.
-3. Deploy (defaults are fine for Next.js).
-4. In the project **Settings** → **Domains**, add `promptmaster.io` and `www.promptmaster.io`.
-5. At your domain registrar, add the DNS records Vercel shows (usually A/CNAME for root and www).
+## Tech
 
-## License
-
-MIT
+HTML, CSS, and vanilla JavaScript. No build step, no npm.

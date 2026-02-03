@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prompt Master — Copy prompts for ChatGPT, Cursor, Claude, Copilot</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <h1 class="title">Prompt Master</h1>
+      <p class="tagline">Copy prompts for ChatGPT, Cursor, Claude, Copilot. Click one to expand and copy.</p>
+    </header>
+
+    <aside class="controls">
+      <label for="tool-filter" class="control-label">Filter by tool</label>
+      <select id="tool-filter" class="select" aria-label="Filter prompts by AI tool">
+        <option value="">All</option>
+        <option value="chatgpt">ChatGPT</option>
+        <option value="cursor">Cursor</option>
+        <option value="claude">Claude</option>
+        <option value="copilot">Copilot</option>
+        <option value="general">Any AI</option>
+      </select>
+
+      <label for="search" class="control-label">Search</label>
+      <input type="search" id="search" class="input" placeholder="Search prompts…" aria-label="Search prompts">
+    </aside>
+
+    <main class="main">
+      <ul id="prompt-list" class="prompt-list" aria-label="Prompt library"></ul>
+    </main>
+
+    <footer class="footer">
+      <p>Prompt Master — HTML, CSS, JavaScript. <a href="https://github.com/nikulsinhdabhi/promptmaster">Source on GitHub</a>.</p>
+    </footer>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
