@@ -178,18 +178,27 @@ body {
 
 .prompt-vars input {
   font-family: var(--font-sans);
-  font-size: 0.875rem;
-  padding: 0.5rem 0.65rem;
+  font-size: 0.9375rem;
+  line-height: 1.4;
+  padding: 0.5rem 0.75rem;
+  min-height: 2.5rem;
   border: 1px solid var(--border);
   border-radius: 6px;
   background: var(--paper);
   color: var(--ink);
   width: 100%;
+  box-sizing: border-box;
+  word-break: normal;
+}
+
+.prompt-vars input::placeholder {
+  color: var(--ink-light);
 }
 
 .prompt-vars input:focus {
   outline: none;
   border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(180, 83, 9, 0.15);
 }
 
 .prompt-preview {
@@ -200,12 +209,29 @@ body {
   border: 1px solid var(--border);
   border-radius: 6px;
   padding: 0.75rem 0.85rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  user-select: none;
   margin: 0.75rem 0;
   color: var(--ink-muted);
   white-space: pre-wrap;
   word-break: break-word;
   max-height: 12rem;
   overflow-y: auto;
+}
+
+.prompt-preview:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(180, 83, 9, 0.12);
+}
+
+.prompt-preview:focus {
+  outline: none;
+}
+
+.prompt-preview:focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(180, 83, 9, 0.2);
 }
 
 .prompt-actions {

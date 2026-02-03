@@ -206,7 +206,7 @@
 
   function renderPrompt(p, values, isOpen, copiedId) {
     values = values || {};
-    var resolvedBody = (p.variables && p.variables.length) ? substitute(p.body, values) : p.body;
+    var resolvedBody = (p.variables && p.variables.length) ? substitute(p.body, normalizedValues(values)) : p.body;
     var toolLabels = (p.tools || [])
       .map(function (t) {
         var tool = TOOLS.find(function (x) { return x.id === t; });
@@ -222,7 +222,7 @@
           .map(
             function (v) {
               return (
-                '<input type="text" data-prompt-id="' +
+                '<input type="text" spellcheck="true" autocapitalize="on" autocomplete="off" data-prompt-id="' +
                 escapeAttr(p.id) +
                 '" data-var="' +
                 escapeAttr(v.key) +
@@ -260,7 +260,7 @@
       "</p>" +
       (toolLabels.length ? '<div class="tool-tags">' + toolLabels.map(function (l) { return '<span class="tool-tag">' + escapeHtml(l) + "</span>"; }).join("") + "</div>" : "") +
       varsHtml +
-      '<pre class="prompt-preview">' +
+      '<pre class="prompt-preview" data-prompt-id="' + escapeAttr(p.id) + '" role="button" tabindex="0" aria-label="Click to copy prompt and open in ChatGPT or Claude">' +
       escapeHtml(resolvedBody) +
       "</pre>" +
       '<div class="prompt-actions">' +
@@ -296,6 +296,19 @@
       .replace(/>/g, "&gt;");
   }
 
+  function normalizeInputValue(str) {
+    if (str == null || typeof str !== "string") return "";
+    return str
+      .trim()
+      .replace(/\s+/g, " ");
+  }
+
+  function normalizedValues(obj) {
+    var out = {};
+    for (var k in obj) out[k] = normalizeInputValue(obj[k]);
+    return out;
+  }
+
   function getValuesFromForm() {
     var values = {};
     document.querySelectorAll(".prompt-vars input[data-prompt-id][data-var]").forEach(function (input) {
@@ -317,11 +330,30 @@
       return;
     }
 
+    var focused = document.activeElement;
+    var savePromptId, saveVarKey, saveStart, saveEnd;
+    if (focused && listEl.contains(focused) && focused.matches && focused.matches(".prompt-vars input")) {
+      savePromptId = focused.getAttribute("data-prompt-id");
+      saveVarKey = focused.getAttribute("data-var");
+      saveStart = focused.selectionStart;
+      saveEnd = focused.selectionEnd;
+    }
+
     listEl.innerHTML = filtered
       .map(function (p) {
         return renderPrompt(p, values[p.id], openId === p.id, copiedId);
       })
       .join("");
+
+    if (savePromptId && saveVarKey) {
+      listEl.querySelectorAll(".prompt-vars input").forEach(function (input) {
+        if (input.getAttribute("data-prompt-id") === savePromptId && input.getAttribute("data-var") === saveVarKey) {
+          input.focus();
+          var len = input.value.length;
+          input.setSelectionRange(Math.min(saveStart, len), Math.min(saveEnd, len));
+        }
+      });
+    }
 
     listEl.querySelectorAll(".prompt-vars input").forEach(function (input) {
       input.addEventListener("input", function () {
@@ -335,7 +367,7 @@
       var hasVars = btn.getAttribute("data-has-vars") === "1";
       var valuesAgain = getValuesFromForm();
       var p = prompts.find(function (x) { return x.id === promptId; });
-      return hasVars && p && p.variables ? substitute(body, valuesAgain[p.id] || {}) : body;
+      return hasVars && p && p.variables ? substitute(body, normalizedValues(valuesAgain[p.id] || {})) : body;
     }
 
     listEl.querySelectorAll(".copy-btn").forEach(function (btn) {
@@ -401,6 +433,44 @@
 
     listEl.querySelectorAll(".open-claude-btn").forEach(function (btn) {
       btn.addEventListener("click", openWithPaste("https://claude.ai/", "Claude"));
+    });
+
+    function getUrlAndLabelForPrompt(p) {
+      if (!p || !p.tools || !p.tools.length) return { url: "https://chat.openai.com/", label: "ChatGPT" };
+      if (p.tools.indexOf("chatgpt") !== -1) return { url: "https://chat.openai.com/", label: "ChatGPT" };
+      if (p.tools.indexOf("claude") !== -1) return { url: "https://claude.ai/", label: "Claude" };
+      return { url: "https://chat.openai.com/", label: "ChatGPT" };
+    }
+
+    listEl.querySelectorAll(".prompt-preview").forEach(function (pre) {
+      function handlePreviewClick() {
+        var promptId = pre.getAttribute("data-prompt-id");
+        var p = prompts.find(function (x) { return x.id === promptId; });
+        if (!p) return;
+        var valuesAgain = getValuesFromForm();
+        var body = (p.variables && p.variables.length)
+          ? substitute(p.body, normalizedValues(valuesAgain[p.id] || {}))
+          : p.body;
+        var target = getUrlAndLabelForPrompt(p);
+        navigator.clipboard.writeText(body).then(function () {
+          window.open(target.url, "_blank", "noopener,noreferrer");
+          showToast("Copied! Opened " + target.label + ". Paste with Cmd+V (Mac) or Ctrl+V (Windows) in the chat.");
+        }).catch(function () {
+          window.open(target.url, "_blank", "noopener,noreferrer");
+          showToast("Could not copy. Use Copy button then paste in the chat.");
+        });
+      }
+      pre.addEventListener("click", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        handlePreviewClick();
+      });
+      pre.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          handlePreviewClick();
+        }
+      });
     });
   }
 
