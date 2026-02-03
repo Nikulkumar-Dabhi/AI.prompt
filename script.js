@@ -192,14 +192,44 @@
     {
       id: "youtube-summary",
       title: "YouTube Video Summary",
-      description: "Summarize any YouTube video in your chosen format: 10–12 bullet points, 2 paragraphs, or 1 page extract. Paste the video link.",
-      body: "Summarize this YouTube video for me.\n\nVideo URL: {{link}}\n\nI want the summary in this format: {{format}}.\n\nIf you cannot access the video directly, ask me to paste the transcript or use a tool to fetch the transcript, then produce the summary in the requested format.",
+      description: "Summarize any YouTube video. Paste the link and choose output format, length, and style from the dropdowns.",
+      body: "Summarize this YouTube video for me.\n\nVideo URL: {{link}}\n\nOutput format: {{output_format}}\nLength: {{length}}\nStyle: {{style}}\n\nIf you cannot access the video directly, ask me to paste the transcript or use a tool to fetch the transcript, then produce the summary in the requested format and style.",
       tools: ["chatgpt", "claude", "gemini", "general"],
       category: "Productivity",
       tags: ["youtube", "summary", "video", "bullet-points", "extract"],
       variables: [
         { key: "link", label: "YouTube video link", placeholder: "https://www.youtube.com/watch?v=..." },
-        { key: "format", label: "Summary format", placeholder: "10–12 key bullet points, OR 2 paragraph summary, OR 1 page extract" },
+        {
+          key: "output_format",
+          label: "Output format",
+          type: "select",
+          options: [
+            { value: "10–12 key bullet points", label: "10–12 key bullet points" },
+            { value: "2 paragraph summary", label: "2 paragraph summary" },
+            { value: "1 page extract", label: "1 page extract" },
+          ],
+        },
+        {
+          key: "length",
+          label: "Length",
+          type: "select",
+          options: [
+            { value: "concise (brief)", label: "Concise (brief)" },
+            { value: "medium", label: "Medium" },
+            { value: "detailed (in-depth)", label: "Detailed (in-depth)" },
+          ],
+        },
+        {
+          key: "style",
+          label: "Style",
+          type: "select",
+          options: [
+            { value: "formal", label: "Formal" },
+            { value: "casual", label: "Casual" },
+            { value: "technical", label: "Technical" },
+            { value: "conversational", label: "Conversational" },
+          ],
+        },
       ],
     },
   ];
@@ -243,13 +273,25 @@
         p.variables
           .map(
             function (v) {
+              if (v.type === "select" && v.options && v.options.length) {
+                var current = values[v.key] || (v.options[0] && v.options[0].value) || "";
+                var opts = v.options.map(function (opt) {
+                  var val = (opt.value != null ? opt.value : opt);
+                  var lab = (opt.label != null ? opt.label : opt);
+                  return '<option value="' + escapeAttr(String(val)) + '"' + (current === val ? ' selected' : '') + '>' + escapeHtml(lab) + "</option>";
+                }).join("");
+                var labelHtml = (v.label ? '<label class="prompt-var-label">' + escapeHtml(v.label) + '</label>' : '');
+                return labelHtml + '<select data-prompt-id="' + escapeAttr(p.id) + '" data-var="' + escapeAttr(v.key) + '" class="prompt-var-select">' + opts + "</select>";
+              }
+              var labelHtml = (v.label ? '<label class="prompt-var-label">' + escapeHtml(v.label) + '</label>' : '');
               return (
+                labelHtml +
                 '<input type="text" spellcheck="true" autocapitalize="on" autocomplete="off" data-prompt-id="' +
                 escapeAttr(p.id) +
                 '" data-var="' +
                 escapeAttr(v.key) +
                 '" placeholder="' +
-                escapeAttr(v.placeholder) +
+                escapeAttr(v.placeholder || "") +
                 '" value="' +
                 escapeAttr(values[v.key] || "") +
                 '">'
@@ -334,12 +376,12 @@
 
   function getValuesFromForm() {
     var values = {};
-    document.querySelectorAll(".prompt-vars input[data-prompt-id][data-var]").forEach(function (input) {
-      var id = input.getAttribute("data-prompt-id");
-      var key = input.getAttribute("data-var");
+    document.querySelectorAll(".prompt-vars input[data-prompt-id][data-var], .prompt-vars select[data-prompt-id][data-var]").forEach(function (el) {
+      var id = el.getAttribute("data-prompt-id");
+      var key = el.getAttribute("data-var");
       if (!id || !key) return;
       if (!values[id]) values[id] = {};
-      values[id][key] = input.value;
+      values[id][key] = el.value;
     });
     return values;
   }
@@ -380,6 +422,11 @@
 
     listEl.querySelectorAll(".prompt-vars input").forEach(function (input) {
       input.addEventListener("input", function () {
+        debouncedRender();
+      });
+    });
+    listEl.querySelectorAll(".prompt-vars select").forEach(function (sel) {
+      sel.addEventListener("change", function () {
         debouncedRender();
       });
     });

@@ -201,6 +201,37 @@ body {
   box-shadow: 0 0 0 3px rgba(180, 83, 9, 0.15);
 }
 
+.prompt-var-label {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--ink-muted);
+  margin-bottom: 0.2rem;
+}
+
+.prompt-vars select,
+.prompt-var-select {
+  font-family: var(--font-sans);
+  font-size: 0.9375rem;
+  line-height: 1.4;
+  padding: 0.5rem 0.75rem;
+  min-height: 2.5rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--paper);
+  color: var(--ink);
+  width: 100%;
+  box-sizing: border-box;
+  cursor: pointer;
+}
+
+.prompt-vars select:focus,
+.prompt-var-select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(180, 83, 9, 0.15);
+}
+
 .prompt-preview {
   font-family: ui-monospace, "SF Mono", Monaco, monospace;
   font-size: 0.8125rem;
