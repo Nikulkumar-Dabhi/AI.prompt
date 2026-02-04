@@ -232,6 +232,51 @@
         },
       ],
     },
+    {
+      id: "medium-post-pro",
+      title: "Medium Post (Pro — Naval/Koe/Clear)",
+      description: "High-quality Medium post with tone options, word count, image count, Gemini images, and viral-ready structure.",
+      body: "ROLE:\nYou are a professional content writer with a clear, modern authorial voice inspired by Naval Ravikant, Dan Koe, and James Clear.\n\nTOPIC:\n{{topic}}\n\nOBJECTIVE:\nWrite a high-quality Medium blog post on the given topic. The goal is to educate, provoke thought, and encourage sharing while maintaining clarity, authority, and a calm, confident tone.\n\nWRITING STYLE:\nWrite in a professional yet casual author style. The writing should feel reflective, insightful, and practical. Favor short, direct sentences. Avoid fluff. Prioritize clarity, leverage, and timeless ideas. Use simple language to express high-level thinking.\n\nCONTENT LENGTH:\nTarget {{word_count}} words. Expand only if it improves clarity or narrative flow.\n\nSTRUCTURE & FORMATTING:\nUse GitHub-style Markdown formatting. Begin with a strong, curiosity-driven title that is optimized for virality. Write in clear paragraphs, not bullet-heavy sections. Use headings only when they improve readability. Each paragraph should develop a single idea and flow naturally into the next.\n\nIMAGES:\nGenerate {{image_count}} images using the Gemini Pro model. All images should share a similar color palette and visual theme aligned with the post's message. Remove Gemini branding or logos using https://banana.ovo.re/. Assume images are downloaded locally and uploaded manually to Medium.\n\nIMAGE PLACEMENT:\nInsert images naturally between sections of the post. After each image, include a short, thoughtful caption that reinforces the idea being discussed in the surrounding paragraphs.\n\nTONE OPTIONS:\nTone intensity: {{tone_intensity}}.\nParagraph density: {{paragraph_density}}.\nCTA style (optional): {{cta_style}}.\n\nFINAL REQUIREMENTS:\nProofread the entire post for grammar, flow, and clarity. Ensure the writing is concise and polished. End the post with exactly {{hashtag_count}} relevant hashtags optimized for reach and virality. The final output should be ready to save as a Medium draft without further edits.",
+      tools: ["chatgpt", "claude", "gemini", "general"],
+      category: "Writing",
+      tags: ["medium", "blog", "naval", "james-clear", "dan-koe", "viral"],
+      variables: [
+        { key: "topic", label: "Topic", placeholder: "e.g. Why slow thinking beats fast productivity" },
+        { key: "word_count", label: "Word count", placeholder: "e.g. 200–300" },
+        { key: "image_count", label: "Number of images", placeholder: "e.g. 5–6" },
+        {
+          key: "tone_intensity",
+          label: "Tone intensity",
+          type: "select",
+          options: [
+            { value: "Minimal", label: "Minimal" },
+            { value: "Balanced", label: "Balanced" },
+            { value: "Bold", label: "Bold" },
+          ],
+        },
+        {
+          key: "paragraph_density",
+          label: "Paragraph density",
+          type: "select",
+          options: [
+            { value: "Short-form", label: "Short-form" },
+            { value: "Mixed", label: "Mixed" },
+            { value: "Essay-style", label: "Essay-style" },
+          ],
+        },
+        {
+          key: "cta_style",
+          label: "CTA style",
+          type: "select",
+          options: [
+            { value: "Soft insight", label: "Soft insight" },
+            { value: "Reflective question", label: "Reflective question" },
+            { value: "Action-oriented", label: "Action-oriented" },
+          ],
+        },
+        { key: "hashtag_count", label: "Number of hashtags", placeholder: "e.g. 5" },
+      ],
+    },
   ];
 
   function substitute(body, values) {
