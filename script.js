@@ -386,6 +386,21 @@
     return values;
   }
 
+  function openModelTab(url, label, modelId) {
+    if (modelId && openTabWindows[modelId] && !openTabWindows[modelId].closed) {
+      openTabWindows[modelId].focus();
+      return;
+    }
+    var a = document.createElement("a");
+    a.href = url;
+    a.target = modelId ? "pm-" + modelId : "_blank";
+    a.rel = "noopener noreferrer";
+    a.style.display = "none";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
   function render(listEl, openId, copiedId) {
     var filtered = filterPrompts();
     var values = getValuesFromForm();
@@ -459,21 +474,6 @@
           .catch(function () {});
       });
     });
-
-    function openModelTab(url, label, modelId) {
-      var win;
-      if (modelId && openTabWindows[modelId] && !openTabWindows[modelId].closed) {
-        openTabWindows[modelId].focus();
-        win = openTabWindows[modelId];
-      } else {
-        var targetName = modelId ? "pm-" + modelId : "_blank";
-        win = window.open(url, targetName, "noopener,noreferrer");
-        if (modelId && win) openTabWindows[modelId] = win;
-      }
-      if (!win || win.closed) {
-        showToast("Popup blocked. Allow popups for this site in browser settings.");
-      }
-    }
 
     function showToast(message) {
       var existing = document.getElementById("prompt-master-toast");
