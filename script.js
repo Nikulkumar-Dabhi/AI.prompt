@@ -369,7 +369,7 @@
       "</p>" +
       (toolLabels.length ? '<div class="tool-tags">' + toolLabels.map(function (l) { return '<span class="tool-tag">' + escapeHtml(l) + "</span>"; }).join("") + "</div>" : "") +
       varsHtml +
-      '<pre class="prompt-preview" data-prompt-id="' + escapeAttr(p.id) + '" role="button" tabindex="0" aria-label="Click to copy prompt and open in ChatGPT, Claude, or Gemini">' +
+      '<pre class="prompt-preview" data-prompt-id="' + escapeAttr(p.id) + '" aria-label="Prompt text. Use Copy or Open buttons below.">' +
       escapeHtml(resolvedBody) +
       "</pre>" +
       '<div class="prompt-actions">' +
@@ -550,40 +550,6 @@
       btn.addEventListener("click", function () { openModelTab(OPEN_URLS.gemini.url, OPEN_URLS.gemini.label, "gemini"); });
     });
 
-    function getUrlAndLabelForPrompt(p) {
-      if (!p || !p.tools || !p.tools.length) return { url: OPEN_URLS.chatgpt.url, label: OPEN_URLS.chatgpt.label, modelId: "chatgpt" };
-      var i, t, info;
-      for (i = 0; i < p.tools.length; i++) {
-        t = p.tools[i];
-        if (OPEN_URLS[t]) {
-          info = OPEN_URLS[t];
-          return { url: info.url, label: info.label, modelId: t };
-        }
-      }
-      info = OPEN_URLS.chatgpt;
-      return { url: info.url, label: info.label, modelId: "chatgpt" };
-    }
-
-    listEl.querySelectorAll(".prompt-preview").forEach(function (pre) {
-      function handlePreviewClick() {
-        var promptId = pre.getAttribute("data-prompt-id");
-        var p = prompts.find(function (x) { return x.id === promptId; });
-        if (!p) return;
-        var target = getUrlAndLabelForPrompt(p);
-        openModelTab(target.url, target.label, target.modelId);
-      }
-      pre.addEventListener("click", function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-        handlePreviewClick();
-      });
-      pre.addEventListener("keydown", function (e) {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          handlePreviewClick();
-        }
-      });
-    });
   }
 
   var debounceTimer;
