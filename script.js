@@ -238,7 +238,7 @@
       description: "High-quality Medium post with tone options, word count, image count, Gemini images, and viral-ready structure.",
       body: "ROLE:\nYou are a professional content writer with a clear, modern authorial voice inspired by Naval Ravikant, Dan Koe, and James Clear.\n\nTOPIC:\n{{topic}}\n\nOBJECTIVE:\nWrite a high-quality Medium blog post on the given topic. The goal is to educate, provoke thought, and encourage sharing while maintaining clarity, authority, and a calm, confident tone.\n\nWRITING STYLE:\nWrite in a professional yet casual author style. The writing should feel reflective, insightful, and practical. Favor short, direct sentences. Avoid fluff. Prioritize clarity, leverage, and timeless ideas. Use simple language to express high-level thinking.\n\nCONTENT LENGTH:\nTarget {{word_count}} words. Expand only if it improves clarity or narrative flow.\n\nSTRUCTURE & FORMATTING:\nUse GitHub-style Markdown formatting. Begin with a strong, curiosity-driven title that is optimized for virality. Write in clear paragraphs, not bullet-heavy sections. Use headings only when they improve readability. Each paragraph should develop a single idea and flow naturally into the next.\n\nIMAGES:\nGenerate {{image_count}} images using the Gemini Pro model. All images should share a similar color palette and visual theme aligned with the post's message. Remove Gemini branding or logos using https://banana.ovo.re/. Assume images are downloaded locally and uploaded manually to Medium.\n\nIMAGE PLACEMENT:\nInsert images naturally between sections of the post. After each image, include a short, thoughtful caption that reinforces the idea being discussed in the surrounding paragraphs.\n\nTONE OPTIONS:\nTone intensity: {{tone_intensity}}.\nParagraph density: {{paragraph_density}}.\nCTA style (optional): {{cta_style}}.\n\nFINAL REQUIREMENTS:\nProofread the entire post for grammar, flow, and clarity. Ensure the writing is concise and polished. End the post with exactly {{hashtag_count}} relevant hashtags optimized for reach and virality. The final output should be ready to save as a Medium draft without further edits.",
       tools: ["chatgpt", "claude", "gemini", "general"],
-      category: "Writing",
+      category: "Agent",
       tags: ["medium", "blog", "naval", "james-clear", "dan-koe", "viral"],
       variables: [
         { key: "topic", label: "Topic", placeholder: "e.g. Why slow thinking beats fast productivity" },
@@ -289,15 +289,38 @@
   }
 
   function filterPrompts() {
+    var categoryFilter = (document.getElementById("category-filter") || {}).value;
     var toolFilter = (document.getElementById("tool-filter") || {}).value;
     var searchQuery = ((document.getElementById("search") || {}).value || "").toLowerCase().trim();
 
     return prompts.filter(function (p) {
+      var matchCategory = !categoryFilter || (p.category && p.category === categoryFilter);
+      if (!matchCategory) return false;
       var matchTool = !toolFilter || p.tools.indexOf(toolFilter) !== -1;
       if (!matchTool) return false;
       if (!searchQuery) return true;
-      var text = (p.title + " " + p.description + " " + p.category + " " + (p.tags || []).join(" ") + " " + p.body).toLowerCase();
+      var toolNames = (p.tools || []).map(function (t) {
+        var tool = TOOLS.find(function (x) { return x.id === t; });
+        return tool ? tool.name : t;
+      }).join(" ");
+      var text = (p.title + " " + p.description + " " + p.category + " " + toolNames + " " + (p.tags || []).join(" ") + " " + p.body).toLowerCase();
       return text.indexOf(searchQuery) !== -1;
+    });
+  }
+
+  function populateCategoryFilter() {
+    var sel = document.getElementById("category-filter");
+    if (!sel) return;
+    var categories = [];
+    prompts.forEach(function (p) {
+      if (p.category && categories.indexOf(p.category) === -1) categories.push(p.category);
+    });
+    categories.sort();
+    categories.forEach(function (cat) {
+      var opt = document.createElement("option");
+      opt.value = cat;
+      opt.textContent = cat;
+      sel.appendChild(opt);
     });
   }
 
@@ -563,6 +586,12 @@
   var listEl = document.getElementById("prompt-list");
   var openId = null;
   var copiedId = null;
+
+  populateCategoryFilter();
+
+  document.getElementById("category-filter").addEventListener("change", function () {
+    render(listEl, openId, copiedId);
+  });
 
   document.getElementById("tool-filter").addEventListener("change", function () {
     render(listEl, openId, copiedId);
